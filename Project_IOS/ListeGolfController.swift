@@ -7,19 +7,46 @@
 //
 
 import UIKit
+import GoogleMaps
 
 
-class ListeGolfController: UITableViewController {
-    
+class ListeGolfController: UITableViewController, DBClub, DBParcours, GMSMapViewDelegate {
     
     
     var text = ""
+    var counter = 0
+    
+    var monparcours = Parcours()
+    var parcourtest = Parcours()
+    
+    
+    let dbController = Traitement()
+    
+    
+    func dataLoaded(datas : [GolfModel]?)
+    {
+        tableView.reloadData()//recharger l'interface graphique
+    }
+    
+    func dataLoadedParcours(datas: [Parcours]?)
+    {
+        tableView.reloadData()
+    }
+    
 
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         tableView.rowHeight = 250
+        
+        dbController.delegateCLub = self
+        dbController.delegateParcours = self
+        
+        dbController.loadClub()
+        dbController.loadParcours()
+        
+      
         
     
 
@@ -39,18 +66,37 @@ class ListeGolfController: UITableViewController {
 
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
-        return 3
+        return dbController.tabgolfmodel.count
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        if section == 2 {
-            return 2
+
+          for valeur2 in dbController.tabparcours
+          {
+            
+           if dbController.tabgolfmodel[section].nom_club == valeur2.nom_club
+           {
+            counter += 1
+           }
+          }
+        
+        if(counter == 3)
+        {
+        counter = 0
+        return 3
+        }else if(counter == 2)
+        {
+        counter = 0
+        return 2
+        }else if (counter == 1)
+        {
+        counter = 0
+        return 1
         }else
         {
-           return 1
+        return 0
         }
-        
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath)
@@ -58,6 +104,7 @@ class ListeGolfController: UITableViewController {
         
         let currentCell = tableView.cellForRow(at: indexPath) as! ListeGolfCell
         text = currentCell.MonParcours.text!
+
         self.performSegue(withIdentifier: "row", sender: self)
         
     }
@@ -68,62 +115,95 @@ class ListeGolfController: UITableViewController {
    
         let cell = tableView.dequeueReusableCell(withIdentifier: "MaCellule", for: indexPath) as! ListeGolfCell
         cell.ImageBckCell.image = UIImage(named:"divcard.jpg")
-        if(indexPath.section == 0)
-        {
-        cell.MonParcours?.text = "Clément Ader"
-        cell.MonNbrTrou?.text = "18 trous"
-        }else if(indexPath.section == 1){
-        cell.MonParcours?.text = "Guerville"
-        cell.MonNbrTrou?.text = "18 trous"
-        }else
-        {
-        if(indexPath.row == 0)
-        {
-        cell.MonParcours?.text = "Les Etangs"
-        cell.MonNbrTrou?.text = "18 trous"
-        }
-        if(indexPath.row == 1)
-        {
-        cell.MonParcours?.text = "Le Vexin"
-        cell.MonNbrTrou?.text = "9 trous"
-        }
-            
-        }
         
-
+        for valeur in dbController.tabparcours
+        {
+           
+            if dbController.tabgolfmodel[indexPath.section].nom_club == valeur.nom_club
+            {
+                if dbController.tabgolfmodel[indexPath.section].nom_club == valeur.nom_parcours
+                {
+                    cell.MonParcours?.text = valeur.nom_parcours
+                    cell.MonNbrTrou?.text = "\(valeur.nbr_trous) trous"
+                    Singleton.shared.ParcoursToClub.append(["\(valeur.nom_parcours)":"\(valeur.nom_club)"])
+                }else
+                {
+                    
+                    if(indexPath.row == 0)
+                    {
+                        parcourtest = valeur
+                        cell.MonParcours?.text = valeur.nom_parcours
+                        cell.MonNbrTrou?.text = "\(valeur.nbr_trous) trous"
+                        Singleton.shared.ParcoursToClub.append(["\(valeur.nom_parcours)":"\(valeur.nom_club)"])
+                    }
+                    if(indexPath.row == 1)
+                    {
+                        if(valeur.nom_parcours != parcourtest.nom_parcours)
+                        {
+                        cell.MonParcours?.text = valeur.nom_parcours
+                        cell.MonNbrTrou?.text = "\(valeur.nbr_trous) trous"
+                        
+                        
+                        }
+                    }
+                    
+                }
+               
+                
+            }
+        }
+     
+        
         return cell
     }
     
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if section == 0 {
-            return "Clément Ader"
-        }
-        else if section == 1 {
-            return "Guerville"
-        }
-        else{
-            return "Le Golf club d'Ableiges"
-        }
+        
+        return dbController.tabgolfmodel[section].nom_club
         
     }
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
+        
         headerView.backgroundColor = UIColor(red: 0.5, green: 0.85, blue: 0.5, alpha: 1.00)
         
-        let headerLabel = UILabel(frame: CGRect(x: 30, y: 30, width:
+        let headerLabel = UILabel(frame: CGRect(x: 20, y: 20, width:
             tableView.bounds.size.width, height: tableView.bounds.size.height))
-        headerLabel.font = UIFont(name: "Verdana", size: 25)
+        
+        let headeradresse = UILabel(frame: CGRect(x: 20, y: 70, width:
+            tableView.bounds.size.width, height: tableView.bounds.size.height))
+        
+        let camera = GMSCameraPosition.camera(withLatitude: dbController.tabgolfmodel[section].lattitude,
+                                              longitude: dbController.tabgolfmodel[section].longitude,
+                                              zoom:17)
+        
+        var mapView = GMSMapView.map(withFrame: CGRect(x: 200, y: 10, width:
+            160 , height: 100), camera: camera)
+        mapView.mapType = .satellite
+       
+        headerLabel.font = UIFont(name: "Verdana", size: 13)
         headerLabel.textColor = UIColor.white
         headerLabel.text = self.tableView(self.tableView, titleForHeaderInSection: section)
+        
+        headeradresse.font = UIFont(name: "Verdana", size: 13)
+        headeradresse.textColor = UIColor.white
+        headeradresse.text = dbController.tabgolfmodel[section].adresse
+        
         headerLabel.sizeToFit()
+        headeradresse.sizeToFit()
+        
         headerView.addSubview(headerLabel)
+        headerView.addSubview(headeradresse)
+        headerView.addSubview(mapView)
+        headerView.isUserInteractionEnabled = false
+
         
         return headerView
     }
     
     override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 80
+        return 120
     }
 
     /*
@@ -175,7 +255,6 @@ class ListeGolfController: UITableViewController {
        if let destinationVC = segue.destination as? ScoresController
        {
                 destinationVC.monclubsel = text
-                print("Hello"+text)
        }
     }
     }

@@ -9,7 +9,8 @@
 import UIKit
 
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, DBAuth {
+    
     
     @IBOutlet var ImageBck : UIImageView!
     @IBOutlet var BalleGolf : UIImageView!
@@ -17,6 +18,16 @@ class ViewController: UIViewController {
     @IBOutlet var monmdp : UITextField!
     @IBOutlet var ButtonValidation : UIButton!
     @IBOutlet var spinWheel : UIActivityIndicatorView!
+    @IBOutlet var ErrorLogin : UILabel!
+    @IBOutlet var ErrorMdp : UILabel!
+    
+    
+    let dbController = TraitementAuth()
+    
+    func dataLoadedUser(datas: User?)
+    {
+        ViewController.load()
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,9 +35,19 @@ class ViewController: UIViewController {
         ImageBck.image = UIImage(named:"golflogin.jpg")
         BalleGolf.image = UIImage(named:"GolfBall.png")
         
+        ErrorMdp.isHidden = true
+        ErrorLogin.isHidden = true
+        
+        dbController.delegateUser = self
+        
+
+   
+
+    
         let tap = UITapGestureRecognizer(target : self, action : #selector(ViewController.dismissKeyboard))
         view.addGestureRecognizer(tap)
         //let  swipe = UISwipeGestureRecognizer
+    
         
         
         
@@ -44,17 +65,34 @@ class ViewController: UIViewController {
     }
     
     
-    func validateInfos (userName : String , passs : String) -> Bool
+    func validateLogin (userName : String) -> Bool
     {
         let reg = "\\A\\w{4,18}\\Z"
         let test = NSPredicate(format: "SELF MATCHES %@", reg)
-        return test.evaluate(with: monlogin.text!) && passs.isEmpty == false
+        return test.evaluate(with: monlogin.text!) == false
+    }
+    
+    func validateMdp (pass : String) -> Bool
+    {
+        return pass.isEmpty == true
     }
     
     //enabled storyboard
-    @IBAction func userTextChanged()
+    @IBAction func userLoginChanged()
     {
-    if(validateInfos(userName: monlogin.text!, passs: monmdp.text!))
+        
+    if(validateLogin(userName: monlogin.text!))
+    {
+    ErrorLogin.isHidden = false
+    ErrorLogin.text = "Votre login n'est pas conforme."
+    }
+    else
+    {
+    ErrorLogin.isHidden = true
+    dbController.loadUser(monlogin: self.monlogin.text!)
+    }
+    
+    if(validateLogin(userName: monlogin.text!) == false && validateMdp(pass: monmdp.text!) == false)
     {
     ButtonValidation.isEnabled = true
     }else
@@ -63,36 +101,69 @@ class ViewController: UIViewController {
     }
     }
     
-    func performAuth()
+    @IBAction func userPassChanged()
+    {
+        if(validateMdp(pass: monmdp.text!))
+        {
+            ErrorMdp.isHidden = false
+            ErrorMdp.text = "Votre mot de passe est vide."
+        }
+        else
+        {
+            ErrorMdp.isHidden = true
+        }
+        
+        if(validateLogin(userName: monlogin.text!) == false && validateMdp(pass: monmdp.text!) == false)
+        {
+            ButtonValidation.isEnabled = true
+        }else
+        {
+            ButtonValidation.isEnabled = false
+        }
+    }
+    
+    
+    func validInfo() -> Bool
     {
         //view.endEditing(true)
         spinWheel.startAnimating()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1)
+        
+        if self.dbController.monUser.mot_de_passe == self.monmdp.text!
         {
-        //URLSession.shared.dataTask(with: <#T##URL#>)
-        self.spinWheel.stopAnimating()
-        self.performSegue(withIdentifier: "login", sender: self)
-        
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1)
+            {
+                self.spinWheel.stopAnimating()
+                Singleton.shared.monUser = self.dbController.monUser
+                self.performSegue(withIdentifier: "login", sender: self)
+                
+            } 
+            return false
         }
-    }
-    
-    override func shouldPerformSegue(withIdentifier identifier: String, sender: Any?) -> Bool {
-        
-        if sender is ViewController
+            
+        else
         {
-            return true
+            ErrorMdp.isHidden = false
+            ErrorMdp.text = "Compte inexistant"
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1)
+            {
+                self.spinWheel.stopAnimating()
+            }
+            return false
         }
         
-        else if identifier == "login"
-        {
-            /* URL request ... */
-            performAuth()
-        }
-        
-        return false
+
     }
     
 
+
+    
+    
+    override func shouldPerformSegue(withIdentifier identifier: String, sender: Any?) -> Bool {
+        
+        return validInfo()
+        
+    }
 
 }
 
