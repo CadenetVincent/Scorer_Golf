@@ -21,12 +21,13 @@ class ScoresController : UIViewController, UICollectionViewDataSource, UITextFie
     @IBOutlet var flowlayout : UICollectionViewFlowLayout!
     @IBOutlet var spinWheel : UIActivityIndicatorView!
     @IBOutlet var button : UIButton!
+    @IBOutlet var error : UILabel!
     
     @IBOutlet weak var mavue : GMSMapView!
     
     
     
-    
+   
     var monclubsel = ""
     var monUser : User = User()
     var textfield = ""
@@ -74,6 +75,9 @@ class ScoresController : UIViewController, UICollectionViewDataSource, UITextFie
         collectionView?.dataSource = self
         collectionView?.delegate = self
         collectionView?.allowsMultipleSelection = true
+        
+        spinWheel.isHidden = true
+        error.isHidden = true
         
         print(Singleton.shared.ParcoursToClub)
        
@@ -130,7 +134,7 @@ class ScoresController : UIViewController, UICollectionViewDataSource, UITextFie
         if (indexPath.row == 2 + 3 * n)
         {
         cell.TextScore.isHidden = false
-        cell.TextScore.placeholder = "\(indexPath)"
+        cell.TextScore.placeholder = "\(n+1)"
         cell.delegate = self
         }
      
@@ -142,7 +146,7 @@ class ScoresController : UIViewController, UICollectionViewDataSource, UITextFie
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath)
     {
-    
+        error.isHidden = true
         for n in 0..<dbController.tabtrous.count
         {
         if(indexPath.item == 3 * n)
@@ -178,13 +182,20 @@ class ScoresController : UIViewController, UICollectionViewDataSource, UITextFie
        
         for n in 0..<dbController.tabtrous.count
         {
-            if monscore.score[n] <= 0 || monscore.score[n] > 9
+            
+            if monscore.score[n] > 0 && monscore.score[n] < 9
             {
-                DispatchQueue.main.asyncAfter(deadline: .now())
+             print("ok")
+            }
+            else
+            {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1)
                 {
                     self.spinWheel.stopAnimating()
                 }
                 
+            error.isHidden = false
+            spinWheel.isHidden = true
             return false
                 
             }
@@ -193,7 +204,7 @@ class ScoresController : UIViewController, UICollectionViewDataSource, UITextFie
         }
        
         
-            DispatchQueue.main.asyncAfter(deadline: .now())
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1)
             {
                 self.spinWheel.stopAnimating()
                 
@@ -231,6 +242,7 @@ class ScoresController : UIViewController, UICollectionViewDataSource, UITextFie
                 self.dbController.PostScores(tab: self.info_list)
                 
             }
+           spinWheel.isHidden = true
             return true
         
     }

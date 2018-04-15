@@ -19,8 +19,7 @@ class ResultatsController: UIViewController, DBClub, DBParcours, GMSMapViewDeleg
     
     
     
-    @IBOutlet var resimg: UIImageView!
-    @IBOutlet var searchbar : UISearchBar!
+    @IBOutlet var monlabel : UILabel!
     
     @IBOutlet weak var mavue : GMSMapView!
     
@@ -32,7 +31,7 @@ class ResultatsController: UIViewController, DBClub, DBParcours, GMSMapViewDeleg
     
     var ThatScore = [Score]()
     var ThatTrous : [[Trous]] = []
-    var indexChange = 0
+
     
     
     func dataLoaded(datas : [GolfModel]?)
@@ -72,25 +71,34 @@ class ResultatsController: UIViewController, DBClub, DBParcours, GMSMapViewDeleg
         dbController.loadUser(leuser: Singleton.shared.monUser.login)
         dbController.loadAllTrous()
         
+        start()
         
-        
-        resimg?.image = UIImage(named:"resgolf.png")
+        monlabel?.text = "Nom : \(Singleton.shared.monUser.login)  Classement : \(Singleton.shared.monUser.classement)"
         
         mavue.camera = GMSCameraPosition.camera(withLatitude: 46.358940 , longitude: 2.460723, zoom: 5)
         mavue.mapType = .satellite
-       mavue.delegate = self
+        mavue.delegate = self
+        
+  
         
     }
     
    override func viewDidAppear(_ animated: Bool) {
+
+      start()
     
+    }
+    
+    func start()
+    {
+        arraymarker.removeAll()
+        
         for n in 0..<dbController.tabgolfmodel.count
         {
             let position = CLLocationCoordinate2D(latitude: dbController.tabgolfmodel[n].lattitude, longitude: dbController.tabgolfmodel[n].longitude)
             let marker = GMSMarker(position: position)
-            marker.title = "\(dbController.tabgolfmodel[n].nom_club)"
             marker.icon = UIImage(named: "tee.png")
-           // marker.snippet = "\(monscore.score)"
+            // marker.snippet = "\(monscore.score)"
             marker.infoWindowAnchor = CGPoint(x: 0.5, y: 0.5)
             marker.map = mavue
             arraymarker.append(marker)
@@ -106,13 +114,14 @@ class ResultatsController: UIViewController, DBClub, DBParcours, GMSMapViewDeleg
     
     func mapView(_ mapView: GMSMapView, didChange position: GMSCameraPosition) {
         //print("lol")
+          start()
     }
 
     
     func mapView(_ mapView: GMSMapView, didTapInfoWindowOf marker: GMSMarker) {
         
-        self.showPopover(base: self.view)
-        self.performSegue(withIdentifier: "popmoi", sender: self)
+        //self.showPopover(base: self.view)
+        //self.performSegue(withIdentifier: "popmoi", sender: self)
     
     }
     
@@ -485,15 +494,7 @@ class ResultatsController: UIViewController, DBClub, DBParcours, GMSMapViewDeleg
     }
     */
     
-     func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?)
-     {
-        if segue.identifier == "popmoi"
-        {
-            let popoverViewController = segue.destination as! UIViewController
-            popoverViewController.modalPresentationStyle = UIModalPresentationStyle.popover
-            popoverViewController.popoverPresentationController!.delegate = self
-        }
-    }
+  
     
     func adaptivePresentationStyleForPresentationController(controller: UIPresentationController) -> UIModalPresentationStyle {
         return UIModalPresentationStyle.none

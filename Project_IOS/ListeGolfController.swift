@@ -159,24 +159,32 @@ class ListeGolfController: UITableViewController, DBClub, DBParcours, GMSMapView
     
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         
-        return dbController.tabgolfmodel[section].nom_club
+        return dbController.tabgolfmodel[section].nom_club.uppercased() 
         
     }
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
         
-        headerView.backgroundColor = UIColor(red: 0.5, green: 0.85, blue: 0.5, alpha: 1.00)
+        headerView.backgroundColor = UIColor(red: 0/255, green: 144/255, blue: 81/255, alpha: 1)
         
-        let headerLabel = UILabel(frame: CGRect(x: 20, y: 20, width:
-            tableView.bounds.size.width, height: tableView.bounds.size.height))
+        let headerLabel = UILabel(frame: CGRect(x: 15, y: 15, width:
+            180, height: 30))
         
-        let headeradresse = UILabel(frame: CGRect(x: 20, y: 70, width:
-            tableView.bounds.size.width, height: tableView.bounds.size.height))
+        let headeradresse = UILabel(frame: CGRect(x: 15, y: 40, width:
+            170, height: 30))
+        
+        let headeradresse2 = UILabel(frame: CGRect(x: 15, y: 55, width:
+            170, height: 30))
+        
+        let headeradresse3 = UILabel(frame: CGRect(x: 15, y: 70, width:
+            170, height: 30))
+        
+        
         
         let camera = GMSCameraPosition.camera(withLatitude: dbController.tabgolfmodel[section].lattitude,
                                               longitude: dbController.tabgolfmodel[section].longitude,
-                                              zoom:17)
+                                              zoom: 18 , bearing: 0, viewingAngle: 35)
         
         var mapView = GMSMapView.map(withFrame: CGRect(x: 200, y: 10, width:
             160 , height: 100), camera: camera)
@@ -186,15 +194,35 @@ class ListeGolfController: UITableViewController, DBClub, DBParcours, GMSMapView
         headerLabel.textColor = UIColor.white
         headerLabel.text = self.tableView(self.tableView, titleForHeaderInSection: section)
         
-        headeradresse.font = UIFont(name: "Verdana", size: 13)
+        let adresses = dbController.tabgolfmodel[section].adresse
+        let fulladresses = adresses.components(separatedBy: ",")
+        
+        headeradresse.font = UIFont(name: "Verdana", size: 12)
         headeradresse.textColor = UIColor.white
-        headeradresse.text = dbController.tabgolfmodel[section].adresse
+        headeradresse.text = fulladresses[0];
+        
+        headeradresse2.font = UIFont(name: "Verdana", size: 12)
+        headeradresse2.textColor = UIColor.white
+        headeradresse2.text = fulladresses[1]
+        
+        headeradresse3.font = UIFont(name: "Verdana", size: 12)
+        headeradresse3.textColor = UIColor.white
+        if fulladresses.count > 2 {
+        headeradresse3.text = fulladresses[2]
+        }else
+        {
+        headeradresse3.text = ""
+        }
+       
         
         headerLabel.sizeToFit()
         headeradresse.sizeToFit()
         
         headerView.addSubview(headerLabel)
         headerView.addSubview(headeradresse)
+        headerView.addSubview(headeradresse2)
+        headerView.addSubview(headeradresse3)
+        
         headerView.addSubview(mapView)
         headerView.isUserInteractionEnabled = false
 
